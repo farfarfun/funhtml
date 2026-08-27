@@ -28,3 +28,8 @@ Releases = "https://github.com/farfarfun/funhtml/releases"
 
 [tool.setuptools]
 license-files = []
+
+[dependency-groups]
+dev = [
+    "pytest>=7.0",
+]
