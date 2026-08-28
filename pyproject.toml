@@ -7,7 +7,7 @@ name = "funhtml"
 version = "1.0.4"
 description = "funhtml"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 dependencies = []
 [[project.authors]]
 name = "牛哥"
