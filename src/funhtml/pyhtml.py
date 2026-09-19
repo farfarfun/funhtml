@@ -3,56 +3,56 @@
 PyHTML
 ======
 
-Simple HTML generator for Python.
+Python 版轻量 HTML 生成器。
 
 
-Usage:
+用法：
 
-Lets create a tag.
+先创建一个标签。
 
 >>> t = div()
 >>> t
 div()
 
 
-Tags can be rendered by converting to string.
+标签可以通过转成字符串来渲染。
 
 >>> str(t)
 '<div></div>'
 
 
-Printing an object automatically calls str() with that object.
-I will keep printing tags in this tutorial for clarity.
+打印对象会自动调用 str()。为了清晰起见，本教程后续都用 print 打印标签。
 
 >>> print(div())
 <div></div>
 
 
-Parentheses can be omitted if the tag has no content.
+标签没有内容时可以省略括号。
 
 >>> print(div)
 <div></div>
 
 
-Some tags are self closing.
+有些标签是自闭合的。
 >>> print(hr)
 <hr/>
 
 
-You can put some content into the tag.
+可以往标签里放内容。
+
 >>> print(div('content'))
 <div>
   content
 </div>
 
 
-You can set attributes of the tag.
+可以设置标签的属性。
 
 >>> print(div(lang='tr', id='content', class_="bar", data_value="foo"))
 <div class="bar" data-value="foo" id="content" lang="tr"></div>
 
 
-Or both:
+也可以属性和内容一起给：
 
 >>> print(div(lang='tr')('content'))
 <div lang="tr">
@@ -60,10 +60,10 @@ Or both:
 </div>
 
 
-Content can be anything which can be converted to string.
+内容可以是任何能转换成字符串的对象。
 
-If content is a callable, it will be called with a one argument
-    that is the context you pass to render() as keyword arguments.
+如果内容是一个 callable，渲染时会用一个参数调用它，这个参数就是你通过
+render() 传入的关键字参数组成的上下文（context）。
 
 >>> greet = lambda ctx: 'Hello %s' % ctx.get('user', 'guest')
 >>> greeting = div(greet)
@@ -77,7 +77,7 @@ If content is a callable, it will be called with a one argument
 </div>
 
 
-You can give list of items as content.
+内容也可以是一个列表。
 
 >>> print(div(nav(), greet, hr))
 <div>
@@ -87,7 +87,7 @@ You can give list of items as content.
 </div>
 
 
-You can give give a callable returning a list as content.
+内容也可以是一个返回列表的 callable。
 
 >>> items = lambda ctx: [li('a'), li('b')]
 >>> print(ul(items))
@@ -101,7 +101,7 @@ You can give give a callable returning a list as content.
 </ul>
 
 
-You can give give a generator as content.
+内容也可以是一个生成器（generator）。
 
 >>> def items(ctx):
 ...    for i in range(3):
@@ -120,7 +120,7 @@ You can give give a generator as content.
 </ul>
 
 
-You can nest tags.
+标签可以嵌套。
 
 >>> print(div(div(p('a paragraph'))))
 <div>
@@ -132,7 +132,7 @@ You can nest tags.
 </div>
 
 
-Some tags have sensible defaults.
+部分标签自带合理的默认属性。
 
 >>> print(form())
 <form method="POST"></form>
@@ -142,7 +142,7 @@ Some tags have sensible defaults.
 <html></html>
 
 
-Full example:
+完整示例：
 
 >>> print(html(
 ...     head(
@@ -190,18 +190,18 @@ import sys
 from copy import deepcopy
 from io import StringIO
 from types import GeneratorType
-from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Iterable
 
 if TYPE_CHECKING:
-    # Type stubs for dynamically created tag classes
-    # These help type checkers understand the available tags
+    # 动态创建的标签类的类型桩（stub）
+    # 用于帮助类型检查器识别这些运行时才注册的标签
     from typing import Protocol
 
     class TagProtocol(Protocol):
         def __call__(self, *children: Any, **attributes: Any) -> "Tag": ...
         def __init__(self, *children: Any, **attributes: Any) -> None: ...
 
-    # Regular tags
+    # 常规标签
     body: TagProtocol
     title: TagProtocol
     div: TagProtocol
@@ -263,7 +263,7 @@ if TYPE_CHECKING:
     address: TagProtocol
     head: TagProtocol
 
-    # Self-closing tags
+    # 自闭合标签
     meta: TagProtocol
     link: TagProtocol
     br: TagProtocol
@@ -271,7 +271,7 @@ if TYPE_CHECKING:
     input_: TagProtocol
     img: TagProtocol
 
-    # Whitespace sensitive tags
+    # 空白敏感标签
     code: TagProtocol
     samp: TagProtocol
     pre: TagProtocol
@@ -280,7 +280,7 @@ if TYPE_CHECKING:
     dfn: TagProtocol
 
 
-# The list will be extended by register_all function.
+# 该列表会被 register_all 函数继续扩展。
 __all__ = "Tag Block Safe Var SelfClosingTag html script style form".split()
 
 tags = (
@@ -298,7 +298,7 @@ whitespace_sensitive_tags = "code samp pre var kbd dfn"
 INDENT = 2
 
 
-# Pre-compute translation table for maximum performance
+# 预先计算好转换表，以获得最佳性能
 _ESCAPE_TRANSLATION = str.maketrans(
     {
         "&": "&amp;",
@@ -311,24 +311,24 @@ _ESCAPE_TRANSLATION = str.maketrans(
 
 
 def _escape(text: str) -> str:
-    """Escape HTML special characters.
+    """转义 HTML 特殊字符。
 
-    Uses str.translate() for optimal performance.
+    使用 str.translate() 以获得最佳性能。
 
     Args:
-        text: Text to escape
+        text: 待转义的文本
 
     Returns:
-        Escaped text
+        转义后的文本
     """
     return text.translate(_ESCAPE_TRANSLATION)
 
 
 class TagMeta(type):
-    """Type of the Tag. (type(Tag) == TagMeta)"""
+    """Tag 的元类。（type(Tag) == TagMeta）"""
 
     def __str__(cls) -> str:
-        """Renders as empty tag."""
+        """渲染为空标签。"""
         if cls.self_closing:
             return f"<{cls.__name__}/>"
         else:
@@ -339,30 +339,30 @@ class TagMeta(type):
 
 
 class Tag(metaclass=TagMeta):
-    """Base class for HTML tags.
+    """HTML 标签的基类。
 
     Attributes:
-        safe: If True, content is not escaped while rendering
-        self_closing: If True, tag is self-closing (e.g., <br/>)
-        whitespace_sensitive: If True, preserve whitespace exactly
-        default_attributes: Default attributes for this tag type
-        doctype: DOCTYPE string to prepend (for html tag)
+        safe: 为 True 时渲染内容不做转义
+        self_closing: 为 True 时是自闭合标签（如 <br/>）
+        whitespace_sensitive: 为 True 时原样保留空白字符
+        default_attributes: 该标签类型的默认属性
+        doctype: 需要前置输出的 DOCTYPE 字符串（用于 html 标签）
     """
 
     __slots__ = ("children", "blocks", "attributes")
 
-    safe: bool = False  # do not escape while rendering
+    safe: bool = False  # 渲染时是否跳过转义
     self_closing: bool = False
     whitespace_sensitive: bool = False
-    default_attributes: Dict[str, str] = {}
-    doctype: Optional[str] = None
+    default_attributes: dict[str, str] = {}
+    doctype: str | None = None
 
     def __init__(self, *children: Any, **attributes: Any) -> None:
-        """Initialize a tag with optional children and attributes.
+        """用子元素和属性初始化一个标签。
 
         Args:
-            *children: Child elements (tags, strings, callables, etc.)
-            **attributes: HTML attributes (use class_ for 'class', etc.)
+            *children: 子元素（标签、字符串、callable 等）
+            **attributes: HTML 属性（如 class 冲突关键字用 class_ 表示）
         """
         _safe = attributes.pop("_safe", None)
         if _safe is not None:
@@ -371,13 +371,13 @@ class Tag(metaclass=TagMeta):
         if self.self_closing and children:
             raise ValueError("Self closing tag can't have children")
 
-        self.children: Tuple[Any, ...] = children
+        self.children: tuple[Any, ...] = children
 
-        self.blocks: Dict[str, List["Block"]] = {}
+        self.blocks: dict[str, list["Block"]] = {}
         self._set_blocks(children)
 
-        # Copy default attributes to avoid shared mutable state
-        self.attributes: Dict[str, Any] = dict(self.default_attributes)
+        # 复制默认属性，避免多个实例共享同一个可变字典
+        self.attributes: dict[str, Any] = dict(self.default_attributes)
         self.attributes.update(attributes)
 
     def __call__(self, *children: Any, **options: Any) -> "Tag":
@@ -419,30 +419,30 @@ class Tag(metaclass=TagMeta):
         return deepcopy(self)
 
     def render(
-        self, _out: Optional[StringIO] = None, _indent: int = 0, **context: Any
+        self, _out: StringIO | None = None, _indent: int = 0, **context: Any
     ) -> str:
-        """Render the tag to HTML string.
+        """将标签渲染为 HTML 字符串。
 
         Args:
-            _out: Optional output stream (if None, creates new one)
-            _indent: Current indentation level
-            **context: Rendering context for callable children/attributes
+            _out: 可选的输出流（为 None 时会新建一个）
+            _indent: 当前缩进级别
+            **context: 用于渲染 callable 子元素/属性的上下文
 
         Returns:
-            Rendered HTML string
+            渲染后的 HTML 字符串
         """
         if _out is None:
             _out = StringIO()
 
         indent_str = " " * _indent
 
-        # Write doctype if present
+        # 如果存在 doctype，先写入
         if self.doctype:
             _out.write(indent_str)
             _out.write(self.doctype)
             _out.write("\n")
 
-        # Write opening tag with indentation
+        # 写入带缩进的开始标签
         _out.write(indent_str)
         _out.write(f"<{self.name}")
 
@@ -454,19 +454,19 @@ class Tag(metaclass=TagMeta):
             _out.write(">")
 
             if self.children:
-                # Newline after opening tag (if not whitespace sensitive)
+                # 非空白敏感标签，开始标签后换行
                 if not self.whitespace_sensitive:
                     _out.write("\n")
 
-                # Write content with increased indentation
+                # 以增加后的缩进写入内容
                 self._write_list(self.children, _out, context, _indent + INDENT)
 
                 if not self.whitespace_sensitive:
-                    # Newline and indent before closing tag
+                    # 结束标签前换行并写入缩进
                     _out.write("\n")
                     _out.write(indent_str)
 
-            # Write closing tag
+            # 写入结束标签
             _out.write(f"</{self.name}>")
 
         return _out.getvalue()
@@ -475,20 +475,20 @@ class Tag(metaclass=TagMeta):
         self,
         items: Iterable[Any],
         out: StringIO,
-        context: Dict[str, Any],
+        context: dict[str, Any],
         indent: int = 0,
     ) -> None:
-        """Write a list of items to output.
+        """将一组条目写入输出流。
 
         Args:
-            items: Iterable of items to write
-            out: Output stream
-            context: Rendering context
-            indent: Current indentation level
+            items: 待写入的可迭代对象
+            out: 输出流
+            context: 渲染上下文
+            indent: 当前缩进级别
         """
         first = True
         for child in items:
-            # Write newline between items (but not before first item)
+            # 条目之间换行（第一个条目前不换行）
             if not first and not self.whitespace_sensitive:
                 out.write("\n")
             first = False
@@ -496,7 +496,7 @@ class Tag(metaclass=TagMeta):
             self._write_item(child, out, context, indent)
 
     def _write_item(
-        self, item: Any, out: StringIO, context: Dict[str, Any], indent: int
+        self, item: Any, out: StringIO, context: dict[str, Any], indent: int
     ) -> None:
         if isinstance(item, Tag):
             item.render(out, indent, **context)
@@ -513,13 +513,13 @@ class Tag(metaclass=TagMeta):
     def _write_as_string(
         self, s: Any, out: StringIO, indent: int, escape: bool = True
     ) -> None:
-        """Write a string value to output with optional escaping and indentation.
+        """将一个值以字符串形式写入输出流，可选转义与缩进。
 
         Args:
-            s: Value to write (will be converted to string)
-            out: Output stream
-            indent: Indentation level
-            escape: Whether to escape HTML special characters
+            s: 待写入的值（会被转换成字符串）
+            out: 输出流
+            indent: 缩进级别
+            escape: 是否转义 HTML 特殊字符
         """
         if s is None:
             s = ""
@@ -529,7 +529,7 @@ class Tag(metaclass=TagMeta):
         if escape and not self.safe:
             s = _escape(s)
 
-        # Write content with proper indentation
+        # 按正确的缩进写入内容
         if not self.whitespace_sensitive:
             indent_str = " " * indent
             lines = s.splitlines(True)
@@ -539,33 +539,32 @@ class Tag(metaclass=TagMeta):
         else:
             out.write(s)
 
-    def _write_attributes(self, out: StringIO, context: Dict[str, Any]) -> None:
-        """Write all tag attributes to output.
+    def _write_attributes(self, out: StringIO, context: dict[str, Any]) -> None:
+        """将所有标签属性写入输出流。
 
         Args:
-            out: Output stream
-            context: Rendering context for callable values
+            out: 输出流
+            context: 用于渲染 callable 属性值的上下文
         """
         for key, value in sorted(self.attributes.items()):
-            # Some attribute names such as "class" conflict
-            # with reserved keywords in Python. These must
-            # be postfixed with underscore by user.
+            # 部分属性名（如 "class"）与 Python 关键字冲突，
+            # 使用者需要以下划线结尾来规避（如 class_）。
             if key.endswith("_"):
                 key = key.rstrip("_")
 
-            # Dash is preferred to underscore in attribute names.
+            # 属性名里优先用短横线而非下划线。
             key = key.replace("_", "-")
 
             if callable(value):
                 value = value(context)
 
-            # Handle None values (convert to empty string)
+            # 处理 None 值（转换成空字符串）
             if value is None:
                 value = ""
             elif not isinstance(value, str):
                 value = str(value)
 
-            # Escape attribute value
+            # 转义属性值
             value = _escape(value)
 
             out.write(f' {key}="{value}"')
@@ -579,7 +578,7 @@ class Tag(metaclass=TagMeta):
         self._set_blocks(children, block_name=block_name)
 
     def _set_blocks(
-        self, children: Tuple[Any, ...], block_name: Optional[str] = None
+        self, children: tuple[Any, ...], block_name: str | None = None
     ) -> None:
         for child in children:
             if isinstance(child, Block):
@@ -594,14 +593,14 @@ class Tag(metaclass=TagMeta):
 
 
 class Block(Tag):
-    """List of renderable items."""
+    """可渲染条目的列表。"""
 
     __slots__ = ("block_name",)
 
-    def __init__(self, name: Optional[str]) -> None:
+    def __init__(self, name: str | None) -> None:
         super().__init__()
-        self.block_name: Optional[str] = name
-        self.children: Tuple[Any, ...] = ()
+        self.block_name: str | None = name
+        self.children: tuple[Any, ...] = ()
 
     def __repr__(self) -> str:
         if not self.children:
@@ -610,7 +609,7 @@ class Block(Tag):
             return f"Block({self.block_name!r})({self._repr_children()})"
 
     def render(
-        self, _out: Optional[StringIO] = None, _indent: int = 0, **context: Any
+        self, _out: StringIO | None = None, _indent: int = 0, **context: Any
     ) -> str:
         if _out is None:
             _out = StringIO()
@@ -620,7 +619,7 @@ class Block(Tag):
 
 
 class Safe(Block):
-    """Helper for wrapping content that do not need escaping."""
+    """用于包裹无需转义内容的辅助类。"""
 
     safe: bool = True
 
@@ -629,15 +628,15 @@ class Safe(Block):
         super().__call__(*children, **options)
 
 
-def Var(var: str, default: Any = None) -> Callable[[Dict[str, Any]], Any]:
-    """Helper function for printing a variable from context.
+def Var(var: str, default: Any = None) -> Callable[[dict[str, Any]], Any]:
+    """从上下文中取出变量并打印的辅助函数。
 
     Args:
-        var: Variable name to get from context
-        default: Default value if variable not found
+        var: 要从上下文中获取的变量名
+        default: 变量不存在时的默认值
 
     Returns:
-        Callable that retrieves the variable from context
+        用于从上下文取值的 callable
     """
     return lambda ctx: ctx.get(var, default)
 
@@ -667,22 +666,22 @@ class form(Tag):
     default_attributes = {"method": "POST"}
 
 
-# Module reference for dynamic tag registration
+# 用于动态注册标签的模块引用
 _MODULE = sys.modules[__name__]
 
 
 def register_all(tags: str, parent: type) -> None:
-    """Register all tags from a space-separated string.
+    """根据空格分隔的标签名字符串批量注册标签。
 
-    Dynamically creates tag classes and adds them to the module namespace.
+    动态创建标签类并添加到模块命名空间中。
 
     Args:
-        tags: Space-separated tag names
-        parent: Parent class for the tags
+        tags: 空格分隔的标签名
+        parent: 这些标签的父类
     """
     for tag in tags.split():
         __all__.append(tag)
-        # Create a new class for this tag with the parent as base
+        # 以 parent 为基类创建一个新的标签类
         tag_class = type(tag, (parent,), {"name": tag.rstrip("_")})
         setattr(_MODULE, tag, tag_class)
 
@@ -693,22 +692,21 @@ register_all(whitespace_sensitive_tags, WhitespaceSensitiveTag)
 
 
 def __getattr__(name: str) -> Any:
-    """Support dynamic tag access for type checkers.
+    """支持类型检查器动态访问标签。
 
-    This function is called when an attribute is not found,
-    which helps type checkers understand dynamically created tags.
+    当某个属性找不到时会调用本函数，帮助类型检查器识别动态创建的标签。
 
     Args:
-        name: Name of the attribute to get
+        name: 要获取的属性名
 
     Returns:
-        The tag class if it exists
+        对应的标签类（如果存在）
 
     Raises:
-        AttributeError: If the tag doesn't exist
+        AttributeError: 标签不存在时抛出
     """
-    # This is mainly for type checking - at runtime, tags are already
-    # registered via register_all() and setattr()
+    # 这主要是为了配合类型检查——运行时标签早已通过
+    # register_all() 和 setattr() 注册完毕。
     if name in __all__:
         return getattr(_MODULE, name, None)
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
