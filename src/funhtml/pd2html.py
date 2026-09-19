@@ -1,9 +1,16 @@
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from funhtml.pyhtml import a, body, html, img, li, table, td, tr
+from funhtml.pyhtml import Tag, a, body, html, img, li, table, td, tr
 
 
 class DataFrame2Html:
+    """将 pandas DataFrame 转换为 HTML 表格。
+
+    支持自动识别 URL 列（列名以 `:url` 结尾，或存在 `<列名>:url` 的配对列）
+    并渲染为超链接；列名命中 `IMAGE_KEYWORDS` 关键词时渲染为 `<img>` 标签；
+    列名在 `pass_words`（默认 `["url"]`）中的列会被整体跳过。
+    """
+
     # 默认跳过的列名
     DEFAULT_PASS_WORDS = ["url"]
     # 图片列名关键词
@@ -12,8 +19,23 @@ class DataFrame2Html:
     URL_SUFFIX = ":url"
 
     def __init__(
-        self, data, image_width: int = 250, image_height: int = 250, *args, **kwargs
-    ):
+        self,
+        data: Any,
+        image_width: int = 250,
+        image_height: int = 250,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        """初始化转换器。
+
+        Args:
+            data: 具有 `.columns.values` 与 `.to_dict(orient=...)` 接口的
+                类 DataFrame 对象（通常为 `pandas.DataFrame`）
+            image_width: 图片列渲染时的显示宽度（像素）
+            image_height: 图片列渲染时的显示高度（像素）
+            *args: 预留位，当前未使用
+            **kwargs: 预留位，当前未使用
+        """
         self.data = data
         self.columns = data.columns.values
         self.data_dict = data.to_dict(orient="records")
@@ -22,7 +44,7 @@ class DataFrame2Html:
         self.image_width = image_width
         self.image_height = image_height
 
-    def __check_pass(self, col: Optional[str]) -> bool:
+    def __check_pass(self, col: str | None) -> bool:
         """检查列是否应该被跳过"""
         if col is None:
             return True
@@ -46,12 +68,12 @@ class DataFrame2Html:
             return f"{image_url}&{image_property}"
         return f"{image_url}?{image_property}"
 
-    def get_title(self):
+    def get_title(self) -> Tag:
         """生成表头行"""
         tds = [td(col) for col in self.columns if not self.__check_pass(col)]
         return tr(tds)
 
-    def get_td(self, col: str, data_dict: Dict) -> Optional[td]:
+    def get_td(self, col: str, data_dict: dict) -> Tag | None:
         """生成单个单元格"""
         if self.__check_pass(col):
             return None
@@ -74,7 +96,7 @@ class DataFrame2Html:
         # 普通数据列
         return td(data)
 
-    def get_tr(self, data: Dict):
+    def get_tr(self, data: dict) -> Tag:
         """生成数据行"""
         tds = []
         for col in self.columns:
@@ -83,7 +105,7 @@ class DataFrame2Html:
                 tds.append(td_element)
         return tr(tds)
 
-    def html(self):
+    def html(self) -> Tag:
         """生成 HTML 结构"""
         trs = [self.get_title()]
         trs.extend(self.get_tr(d) for d in self.data_dict)
@@ -98,7 +120,7 @@ def dataframe_to_html(
     df: Any,
     image_width: int = 250,
     image_height: int = 250,
-    pass_words: Optional[List[str]] = None,
+    pass_words: list[str] | None = None,
 ) -> str:
     """将 pandas DataFrame 转换为 HTML 字符串
 
