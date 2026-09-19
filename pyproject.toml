@@ -8,6 +8,8 @@ version = "1.0.4"
 description = "funhtml"
 readme = "README.md"
 requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
 dependencies = []
 [[project.authors]]
 name = "牛哥"
@@ -29,9 +31,6 @@ email = "farfarfun@qq.com"
 Organization = "https://github.com/farfarfun"
 Repository = "https://github.com/farfarfun/funhtml"
 Releases = "https://github.com/farfarfun/funhtml/releases"
-
-[tool.setuptools]
-license-files = []
 
 [dependency-groups]
 dev = [
