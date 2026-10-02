@@ -3,7 +3,8 @@
 覆盖公开 API 的正常路径与常见边界情况：导入、`DataFrame2Html`/
 `dataframe_to_html` 的图片列、空 DataFrame、空 URL、自定义
 `pass_words`，以及 `pyhtml` 的属性渲染、callable/generator 内容、
-自闭合标签异常路径等。不测试内部私有实现细节。
+自闭合标签异常路径、`Safe`/`Var`/`Block`/`copy`/`register_all`/
+callable 属性值等公开辅助能力。不测试内部私有实现细节。
 
 funhtml 是一个纯 Python 的 HTML 生成库（无第三方运行时依赖），因此
 这里不需要 mock 任何网络 / 数据库 / 云服务调用。
@@ -292,6 +293,94 @@ def test_pyhtml_self_closing_tag_rejects_children():
         pass
     else:
         raise AssertionError("self-closing tag with children should raise ValueError")
+
+
+def test_pyhtml_safe_skips_escaping():
+    """`Safe` 包裹的内容渲染时不应被转义（用于已知安全的原始 HTML 片段）。"""
+    from funhtml.pyhtml import Safe, div
+
+    tag = div(Safe("<b>bold</b>"))
+    rendered = str(tag)
+
+    assert "<b>bold</b>" in rendered
+    assert "&lt;b&gt;" not in rendered
+
+
+def test_pyhtml_var_reads_context_with_default():
+    """`Var` 应从 render() 的上下文中按变量名取值，取不到时回退到默认值。"""
+    from funhtml.pyhtml import Var, div
+
+    tag = div(Var("title", default="untitled"))
+
+    assert "untitled" in tag.render()
+    assert "My Page" in tag.render(title="My Page")
+
+
+def test_pyhtml_block_replacement_via_setitem():
+    """`Block` 占位块应能通过 `tag[block_name] = ...` 替换内容。"""
+    from funhtml.pyhtml import Block, div, li, ul
+
+    page = div(ul(Block("items"), li("placeholder")))
+    page["items"] = li("real item")
+
+    rendered = str(page)
+    assert "real item" in rendered
+
+
+def test_pyhtml_block_setitem_unknown_name_raises():
+    """对不存在的 block 名赋值应抛出 KeyError，而不是静默忽略。"""
+    from funhtml.pyhtml import Block, div
+
+    page = div(Block("known"))
+
+    try:
+        page["unknown"] = "x"
+    except KeyError:
+        pass
+    else:
+        raise AssertionError("未知 block 名应抛出 KeyError")
+
+
+def test_pyhtml_copy_produces_independent_deep_copy():
+    """`copy()` 应返回深拷贝，修改副本的子元素不影响原对象。"""
+    from funhtml.pyhtml import div, p
+
+    original = div(p("original"))
+    duplicate = original.copy()
+    duplicate.children[0].children = ("changed",)
+
+    assert "original" in str(original)
+    assert "changed" in str(duplicate)
+    assert duplicate is not original
+
+
+def test_pyhtml_register_all_creates_new_tag_class():
+    """`register_all` 应能动态创建新标签类并挂载到模块命名空间。"""
+    from funhtml import pyhtml
+    from funhtml.pyhtml import Tag, register_all
+
+    assert not hasattr(pyhtml, "custom_widget")
+    register_all("custom_widget", Tag)
+
+    try:
+        assert hasattr(pyhtml, "custom_widget")
+        custom_widget = pyhtml.custom_widget
+        assert issubclass(custom_widget, Tag)
+        assert str(custom_widget("hi")) == "<custom_widget>\n  hi\n</custom_widget>"
+    finally:
+        # 避免污染其他测试的模块全局状态
+        delattr(pyhtml, "custom_widget")
+        pyhtml.__all__.remove("custom_widget")
+
+
+def test_pyhtml_callable_attribute_value_uses_render_context():
+    """属性值为 callable 时，应在 render() 的上下文中求值后再写入。"""
+    from funhtml.pyhtml import div
+
+    tag = div(lang=lambda ctx: ctx.get("lang", "en"))
+
+    assert 'lang="en"' in tag.render()
+    assert 'lang="zh"' in tag.render(lang="zh")
 
 
 def test_no_cli_entry_point_declared():

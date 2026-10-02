@@ -1,6 +1,6 @@
 # funhtml
 
-轻量级纯 Python HTML 生成库，无第三方运行时依赖。提供两套能力：一是用 Python 对象拼装 HTML 标签的 `pyhtml` DSL（类似 PyHTML），二是把 pandas DataFrame 一键转换成 HTML 表格的 `dataframe_to_html` 便捷函数（自动识别图片列、URL 链接列）。
+轻量级纯 Python HTML 生成库，核心 `pyhtml` DSL 无第三方运行时依赖。提供两套能力：一是用 Python 对象拼装 HTML 标签的 `pyhtml` DSL（类似 PyHTML），二是把 pandas DataFrame 一键转换成 HTML 表格的 `dataframe_to_html` 便捷函数（自动识别图片列、URL 链接列，需要可选依赖 pandas）。
 
 ## 安装
 
@@ -30,6 +30,12 @@ print(page.render())
 ```
 
 ### 2. 把 DataFrame 转成 HTML 表格
+
+该功能依赖 pandas，未随核心包默认安装，需要装带 `pandas` extra 的版本：
+
+```bash
+pip install 'funhtml[pandas]'
+```
 
 ```python
 import pandas as pd

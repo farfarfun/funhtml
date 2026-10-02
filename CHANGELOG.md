@@ -11,10 +11,16 @@
 - `pyproject.toml` 显式声明 `license = "MIT"`
 - 补充 `DataFrame2Html` 类文档，公开方法补全类型标注
 - `tests/` 补充图片列、空 DataFrame、自定义 `pass_words`、callable/generator 内容、属性渲染等边界测试
+- 新增 `pandas` 可选依赖 extra（`pip install 'funhtml[pandas]'`），README 的 DataFrame 示例同步补充安装说明
+- `pyproject.toml` 补充 `ruff` 开发依赖与 `[tool.ruff]` lint/format 配置，提供可审计的执行路径
+- `.gitignore` 补充 `*.rar` 规则
+- `tests/` 补充 `Safe`、`Var`、`Block` 占位替换、`copy()`、`register_all` 动态注册、callable 属性值等公开能力的测试
 
 ### 修复
 
 - 修复 `funhtml/__init__.py` 中 `__all__` 声明了 `DataFrame2Html` 但未实际导入的问题，现可通过 `from funhtml import DataFrame2Html` 正常使用
+- 修复 `pd2html.py` 中 `dataframe_to_html` docstring 示例引用了不存在的 `df_to_html` 函数名的问题
+- 修复 `ruff check` 新增配置后暴露的历史遗留问题（`RUF012` 可变类属性默认值改用 `ClassVar`、`SIM103` 简化布尔返回）
 
 ### 变更
 

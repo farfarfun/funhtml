@@ -187,10 +187,11 @@ render() 传入的关键字参数组成的上下文（context）。
 """
 
 import sys
+from collections.abc import Callable, Iterable
 from copy import deepcopy
 from io import StringIO
 from types import GeneratorType
-from typing import TYPE_CHECKING, Any, Callable, Iterable
+from typing import TYPE_CHECKING, Any, ClassVar
 
 if TYPE_CHECKING:
     # 动态创建的标签类的类型桩（stub）
@@ -281,7 +282,17 @@ if TYPE_CHECKING:
 
 
 # 该列表会被 register_all 函数继续扩展。
-__all__ = "Tag Block Safe Var SelfClosingTag html script style form".split()
+__all__ = [
+    "Block",
+    "Safe",
+    "SelfClosingTag",
+    "Tag",
+    "Var",
+    "form",
+    "html",
+    "script",
+    "style",
+]
 
 tags = (
     "head body title div p h1 h2 h3 h4 h5 h6 u b i s a em strong span "
@@ -349,12 +360,12 @@ class Tag(metaclass=TagMeta):
         doctype: 需要前置输出的 DOCTYPE 字符串（用于 html 标签）
     """
 
-    __slots__ = ("children", "blocks", "attributes")
+    __slots__ = ("attributes", "blocks", "children")
 
     safe: bool = False  # 渲染时是否跳过转义
     self_closing: bool = False
     whitespace_sensitive: bool = False
-    default_attributes: dict[str, str] = {}
+    default_attributes: ClassVar[dict[str, str]] = {}
     doctype: str | None = None
 
     def __init__(self, *children: Any, **attributes: Any) -> None:
@@ -373,7 +384,7 @@ class Tag(metaclass=TagMeta):
 
         self.children: tuple[Any, ...] = children
 
-        self.blocks: dict[str, list["Block"]] = {}
+        self.blocks: dict[str, list[Block]] = {}
         self._set_blocks(children)
 
         # 复制默认属性，避免多个实例共享同一个可变字典
@@ -655,15 +666,15 @@ class html(Tag):
 
 class script(Tag):
     safe = True
-    default_attributes = {"type": "text/javascript"}
+    default_attributes: ClassVar[dict[str, str]] = {"type": "text/javascript"}
 
 
 class style(Tag):
-    default_attributes = {"type": "text/css"}
+    default_attributes: ClassVar[dict[str, str]] = {"type": "text/css"}
 
 
 class form(Tag):
-    default_attributes = {"method": "POST"}
+    default_attributes: ClassVar[dict[str, str]] = {"method": "POST"}
 
 
 # 用于动态注册标签的模块引用

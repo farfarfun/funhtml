@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, ClassVar
 
 from funhtml.pyhtml import Tag, a, body, html, img, li, table, td, tr
 
@@ -12,9 +12,9 @@ class DataFrame2Html:
     """
 
     # 默认跳过的列名
-    DEFAULT_PASS_WORDS = ["url"]
+    DEFAULT_PASS_WORDS: ClassVar[list[str]] = ["url"]
     # 图片列名关键词
-    IMAGE_KEYWORDS = ("img", "image", "pic", "image_url")
+    IMAGE_KEYWORDS: ClassVar[tuple[str, ...]] = ("img", "image", "pic", "image_url")
     # URL 后缀标识
     URL_SUFFIX = ":url"
 
@@ -50,9 +50,7 @@ class DataFrame2Html:
             return True
         if col in self.pass_words:
             return True
-        if col.endswith(self.URL_SUFFIX):
-            return True
-        return False
+        return bool(col.endswith(self.URL_SUFFIX))
 
     def __is_image_column(self, col: str) -> bool:
         """检查列是否为图片列"""
@@ -139,7 +137,7 @@ def dataframe_to_html(
     Examples:
         >>> import pandas as pd
         >>> df = pd.DataFrame({'id': [1, 2], 'name': ['Alice', 'Bob']})
-        >>> html_str = df_to_html(df)  # 获取 HTML 字符串
+        >>> html_str = dataframe_to_html(df)  # 获取 HTML 字符串
         >>> print(html_str)  # 打印或保存到文件
     """
     # 创建 DataFrame2Html 实例
