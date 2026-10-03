@@ -241,3 +241,4 @@ AGENTS.local.md
 .run/
 logs/
 node_modules/
+uv.lock
