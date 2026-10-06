@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "funhtml"
 version = "1.0.4"
-description = "funhtml"
+description = "轻量级 Python HTML 生成库，提供 PyHTML DSL 和 pandas DataFrame 到 HTML 表格转换。"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
