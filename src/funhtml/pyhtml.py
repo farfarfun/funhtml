@@ -392,6 +392,15 @@ class Tag(metaclass=TagMeta):
         self.attributes.update(attributes)
 
     def __call__(self, *children: Any, **options: Any) -> "Tag":
+        """更新标签的子元素和可选渲染设置，并返回标签自身。
+
+        Args:
+            *children: 要写入标签的子元素
+            **options: 可选设置；`_safe` 为 True 时不转义内容
+
+        Returns:
+            更新后的标签实例
+        """
         if self.self_closing:
             raise ValueError("Self closing tag can't have children")
 
@@ -424,9 +433,11 @@ class Tag(metaclass=TagMeta):
 
     @property
     def name(self) -> str:
+        """返回标签名称。"""
         return self.__class__.__name__
 
     def copy(self) -> "Tag":
+        """创建并返回当前标签的深拷贝。"""
         return deepcopy(self)
 
     def render(
@@ -653,27 +664,39 @@ def Var(var: str, default: Any = None) -> Callable[[dict[str, Any]], Any]:
 
 
 class SelfClosingTag(Tag):
+    """自闭合 HTML 标签的基类，例如 ``br`` 和 ``img``。"""
+
     self_closing = True
 
 
 class WhitespaceSensitiveTag(Tag):
+    """保留子元素空白字符的 HTML 标签基类，例如 ``pre``。"""
+
     whitespace_sensitive = True
 
 
 class html(Tag):
+    """HTML 文档根标签，渲染时自动输出 HTML5 doctype。"""
+
     doctype = "<!DOCTYPE html>"
 
 
 class script(Tag):
+    """脚本标签，默认使用 ``text/javascript`` 类型且不转义内容。"""
+
     safe = True
     default_attributes: ClassVar[dict[str, str]] = {"type": "text/javascript"}
 
 
 class style(Tag):
+    """样式标签，默认使用 ``text/css`` 类型。"""
+
     default_attributes: ClassVar[dict[str, str]] = {"type": "text/css"}
 
 
 class form(Tag):
+    """表单标签，默认使用 ``POST`` 提交方法。"""
+
     default_attributes: ClassVar[dict[str, str]] = {"method": "POST"}
 
 
@@ -693,7 +716,14 @@ def register_all(tags: str, parent: type) -> None:
     for tag in tags.split():
         __all__.append(tag)
         # 以 parent 为基类创建一个新的标签类
-        tag_class = type(tag, (parent,), {"name": tag.rstrip("_")})
+        tag_class = type(
+            tag,
+            (parent,),
+            {
+                "name": tag.rstrip("_"),
+                "__doc__": "动态注册的 HTML 标签类，可用子元素和属性创建标签。",
+            },
+        )
         setattr(_MODULE, tag, tag_class)
 
 
