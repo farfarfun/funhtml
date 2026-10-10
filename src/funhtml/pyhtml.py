@@ -592,6 +592,15 @@ class Tag(metaclass=TagMeta):
             out.write(f' {key}="{value}"')
 
     def __setitem__(self, block_name: str, *children: Any) -> None:
+        """用给定子元素填充同名的 `Block` 占位块。
+
+        Args:
+            block_name: 占位块名称
+            *children: 填充到该占位块的子元素
+
+        Raises:
+            KeyError: 标签内不存在该名称的占位块时抛出
+        """
         if block_name not in self.blocks:
             raise KeyError(f"Block '{block_name}' not found")
         for block in self.blocks[block_name]:
@@ -620,6 +629,11 @@ class Block(Tag):
     __slots__ = ("block_name",)
 
     def __init__(self, name: str | None) -> None:
+        """创建一个占位块。
+
+        Args:
+            name: 占位块名称，供 `tag[name] = ...` 定位；为 None 时不可被填充
+        """
         super().__init__()
         self.block_name: str | None = name
         self.children: tuple[Any, ...] = ()
@@ -633,6 +647,16 @@ class Block(Tag):
     def render(
         self, _out: StringIO | None = None, _indent: int = 0, **context: Any
     ) -> str:
+        """渲染块内的子元素，块自身不输出任何标签。
+
+        Args:
+            _out: 可选的输出流（为 None 时会新建一个）
+            _indent: 当前缩进级别
+            **context: 用于渲染 callable 子元素/属性的上下文
+
+        Returns:
+            块内子元素渲染后的 HTML 字符串
+        """
         if _out is None:
             _out = StringIO()
 
@@ -646,6 +670,12 @@ class Safe(Block):
     safe: bool = True
 
     def __init__(self, *children: Any, **options: Any) -> None:
+        """包裹一组原样输出（不转义）的内容。
+
+        Args:
+            *children: 需要免转义输出的子元素
+            **options: 传给 `Tag.__call__` 的可选渲染设置
+        """
         super().__init__(None)
         super().__call__(*children, **options)
 

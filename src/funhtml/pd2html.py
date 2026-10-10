@@ -67,12 +67,25 @@ class DataFrame2Html:
         return f"{image_url}?{image_property}"
 
     def get_title(self) -> Tag:
-        """生成表头行"""
+        """生成表头行。
+
+        Returns:
+            包含所有未被跳过列名的 `<tr>` 标签
+        """
         tds = [td(col) for col in self.columns if not self.__check_pass(col)]
         return tr(tds)
 
     def get_td(self, col: str, data_dict: dict) -> Tag | None:
-        """生成单个单元格"""
+        """生成单个单元格。
+
+        Args:
+            col: 列名
+            data_dict: 当前行数据（列名到值的映射）
+
+        Returns:
+            渲染后的 `<td>` 标签；列被跳过时返回 None。存在 `<列名>:url`
+            配对列时渲染为超链接，图片列渲染为 `<img>`，其余为普通文本
+        """
         if self.__check_pass(col):
             return None
 
@@ -95,7 +108,14 @@ class DataFrame2Html:
         return td(data)
 
     def get_tr(self, data: dict) -> Tag:
-        """生成数据行"""
+        """生成一行数据。
+
+        Args:
+            data: 单行数据（列名到值的映射）
+
+        Returns:
+            包含该行所有未被跳过单元格的 `<tr>` 标签
+        """
         tds = []
         for col in self.columns:
             td_element = self.get_td(col, data)
@@ -104,13 +124,22 @@ class DataFrame2Html:
         return tr(tds)
 
     def html(self) -> Tag:
-        """生成 HTML 结构"""
+        """生成完整的 HTML 标签结构。
+
+        Returns:
+            `html(body(table(...)))` 结构的根标签，表格首行为表头，
+            其余为数据行
+        """
         trs = [self.get_title()]
         trs.extend(self.get_tr(d) for d in self.data_dict)
         return html(body(table(trs)))
 
     def html_str(self) -> str:
-        """生成 HTML 字符串"""
+        """生成 HTML 字符串。
+
+        Returns:
+            `html()` 渲染后的完整 HTML 文本（含 DOCTYPE）
+        """
         return self.html().render()
 
 
